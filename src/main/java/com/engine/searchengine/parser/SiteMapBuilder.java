@@ -17,10 +17,9 @@ public class SiteMapBuilder extends RecursiveTask<Page> {
 
     private List<SiteMapBuilder> taskList = new ArrayList<>();
     private List<String> urlList = new ArrayList<>();
-    private List<Page> pages = new ArrayList<>();
+    private static List<Page> pages = new ArrayList<>();
 
     String url;
-    private static int counter = 0;
 
     public SiteMapBuilder(String url){
         this.url = url;
@@ -36,10 +35,6 @@ public class SiteMapBuilder extends RecursiveTask<Page> {
             ArrayList<String> media = getUrls();
 
             for (String src : media) {
-                if (counter > 500) {
-                    break;
-                }
-                ++counter;
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
@@ -50,7 +45,10 @@ public class SiteMapBuilder extends RecursiveTask<Page> {
                     SiteMapBuilder builder = new SiteMapBuilder(src);
                     urlList.add(src);
                     taskList.add(builder);
-                    pages.add(generatePage(src));
+                    Page page = generatePage(src);
+                    if(!pages.contains(page)){
+                        pages.add(generatePage(src));
+                    }
                     builder.fork();
                 }
             }
