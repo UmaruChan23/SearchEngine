@@ -8,17 +8,18 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.RecursiveTask;
 
 public class SiteMapBuilder extends RecursiveTask<Page> {
 
     Connection.Response response = null;
 
-    private List<SiteMapBuilder> taskList = new ArrayList<>();
-    private List<String> urlList = new ArrayList<>();
-    private static List<Page> pages = new ArrayList<>();
-
+    private final List<SiteMapBuilder> taskList = new ArrayList<>();
+    private final  List<String> urlList = new ArrayList<>();
+    private static final Set<Page> pages = new HashSet<>();
     String url;
 
     public SiteMapBuilder(String url){
@@ -46,14 +47,15 @@ public class SiteMapBuilder extends RecursiveTask<Page> {
                     urlList.add(src);
                     taskList.add(builder);
                     Page page = generatePage(src);
-                    if(!pages.contains(page)){
-                        pages.add(generatePage(src));
+                    synchronized (pages) {
+                        if(page.getCode() != 0)
+                            pages.add(page);
                     }
                     builder.fork();
                 }
             }
             for (SiteMapBuilder builder : taskList) {
-                pages.add(builder.join());
+                builder.join();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -84,7 +86,7 @@ public class SiteMapBuilder extends RecursiveTask<Page> {
         return urls;
     }
 
-    public List<Page> getPages() {
+    public Set<Page> getPages() {
         return pages;
     }
 }
